@@ -31,6 +31,9 @@ class PointServiceUnitTest {
     @Mock
     private PointTransactionValidator validator;
 
+    @Mock
+    private PointHistoryService pointHistoryService;
+
     @Test
     @DisplayName("새로운 유저가 포인트를 충전한다.")
     void chargeUserPointByNewUser() {
@@ -41,10 +44,12 @@ class PointServiceUnitTest {
         long currentTimeMillis = System.currentTimeMillis();
         UserPoint userPoint = UserPoint.empty(userId); // 조회로 반환 될 empty userPoint
         UserPoint expectedUserPoint = new UserPoint(userId, chargeAmount, currentTimeMillis); // 충전 후 반환 될 userPoint
+        PointHistory expectedHistory = new PointHistory(1L, userId, chargeAmount, TransactionType.CHARGE, currentTimeMillis);
 
         given(userPointTable.selectById(userId)).willReturn(userPoint);
         willDoNothing().given(validator).validateChargePoint(userPoint, chargeAmount); // 포인트 충전시 예외 던지지 않음을 모의
-        given(userPointTable.insertOrUpdate(userId, chargeAmount)).willReturn(expectedUserPoint);
+        given(userPointTable.insertOrUpdate(userId, chargeAmount)).willReturn(expectedUserPoint); // 미리 만들어 둔 expectedUserPoint 를 반환 함을 모의
+        given(pointHistoryService.addHistory(expectedUserPoint, chargeAmount, TransactionType.CHARGE)).willReturn(expectedHistory); // 미리 만들어 둔 history 객체를 반환 함을 모의
 
         // when
         UserPoint result = pointService.chargeUserPoint(userId, chargeAmount);
@@ -53,6 +58,7 @@ class PointServiceUnitTest {
         then(userPointTable).should().selectById(userId);
         then(userPointTable).should().insertOrUpdate(userId, chargeAmount);  // db insert 메서드 호출 검증
         then(validator).should().validateChargePoint(userPoint, chargeAmount); // validator 호출 검증
+        then(pointHistoryService).should().addHistory(result, chargeAmount, TransactionType.CHARGE); // addHistory 호출 검증
         assertThat(result).isEqualTo(expectedUserPoint);  // 결과 검증
         assertThat(result.point()).isEqualTo(userPoint.point() + chargeAmount);  // 결과 검증
     }
@@ -67,18 +73,20 @@ class PointServiceUnitTest {
         long chargeAmount2 = 200L;
         UserPoint userPoint = pointService.chargeUserPoint(userId, chargeAmount1);
         UserPoint afterChargeUserPoint = new UserPoint(userId, chargeAmount1 + chargeAmount2, System.currentTimeMillis()); // 충전 후 반환 될 userPoint
+        PointHistory expectedHistory = new PointHistory(2L, userId, chargeAmount2, TransactionType.CHARGE, afterChargeUserPoint.updateMillis()); // 충전 후 기록될 history 모의 객체 (2번 충전 이므로 cursor 는 2L)
 
         given(userPointTable.insertOrUpdate(userId, chargeAmount2)).willReturn(afterChargeUserPoint);
         willDoNothing().given(validator).validateChargePoint(userPoint, chargeAmount2); // 포인트 충전시 예외 던지지 않음을 모의
+        given(pointHistoryService.addHistory(afterChargeUserPoint, chargeAmount2, TransactionType.CHARGE)).willReturn(expectedHistory); // 미리 만들어 둔 history 객체를 반환 함을 모의
 
         // when
         UserPoint result = pointService.chargeUserPoint(userId, chargeAmount2);
-        log.info("result userPoint :: ${}", result);
 
         // then
         verify(userPointTable, times(2)).selectById(userId);
         then(userPointTable).should().insertOrUpdate(userId, chargeAmount2);
         then(validator).should().validateChargePoint(userPoint, chargeAmount2);
+        then(pointHistoryService).should().addHistory(result, chargeAmount2, TransactionType.CHARGE); // addHistory 호출 검증
         assertThat(result).isEqualTo(afterChargeUserPoint);
     }
 
@@ -110,11 +118,14 @@ class PointServiceUnitTest {
         UserPoint userPoint = new UserPoint(userId, chargeAmount, currentTimeMillis);
 
         long expendAmount = 50L;
-        UserPoint expectedUserPoint = new UserPoint(userId, chargeAmount - expendAmount, currentTimeMillis);
+        UserPoint expectedUserPoint = new UserPoint(userId, chargeAmount - expendAmount, currentTimeMillis); // 포인트를 사용 후 반환 될 userPoint 모의 객체
+
+        PointHistory expectedHistory = new PointHistory(2L, userId, expendAmount, TransactionType.USE, currentTimeMillis); // 포인트를 사용 후 반환 될 history 모의 객체
 
         given(userPointTable.selectById(userId)).willReturn(userPoint); // 포인트 조회 동작
         willDoNothing().given(validator).validateUsePoint(userPoint, expendAmount); // 포인트 사용 검증
         given(userPointTable.insertOrUpdate(userId, expendAmount)).willReturn(expectedUserPoint); // 포인트 사용 시도
+        given(pointHistoryService.addHistory(expectedUserPoint, expendAmount, TransactionType.USE)).willReturn(expectedHistory); // 미리 만들어 둔 history 객체를 반환 함을 모의
 
         // when
         UserPoint result = pointService.expendUserPoint(userId, expendAmount);
@@ -123,6 +134,7 @@ class PointServiceUnitTest {
         then(userPointTable).should().selectById(userId); // 기존 userPoint 조회 검증
         then(validator).should().validateUsePoint(userPoint, expendAmount);  // validator 호출 검증
         then(userPointTable).should().insertOrUpdate(userId, chargeAmount - expendAmount);  // 포인트 업데이트 호출 검증
+        then(pointHistoryService).should().addHistory(result, expendAmount, TransactionType.USE); // addHistory 호출 검증
         assertThat(result).isEqualTo(expectedUserPoint);  // 결과 검증
     }
 
@@ -155,6 +167,7 @@ class PointServiceUnitTest {
         then(userPointTable).should().selectById(userId); // 기존 userPoint 조회 검증
         then(validator).should().validateUsePoint(userPoint, expendAmount);
         then(userPointTable).should(never()).insertOrUpdate(anyLong(), anyLong());  // 포인트가 부족하여 insertOrUpdate는 호출되지 않았음을 검증
+        then(pointHistoryService).should(never()).addHistory(any(),anyLong(),any()); // 예외 발생으로 인하여 history 가 쌓이지 않았음을 검증
     }
 
     @Test
@@ -183,5 +196,6 @@ class PointServiceUnitTest {
         then(userPointTable).should().selectById(userId); // 기존 userPoint 조회 검증
         then(validator).should().validateChargePoint(userPoint, chargeAmount);
         then(userPointTable).should(never()).insertOrUpdate(anyLong(), anyLong());  // 최대 잔고를 초과하여 insertOrUpdate는 호출되지 않았음을 검증
+        then(pointHistoryService).should(never()).addHistory(any(),anyLong(),any()); // 예외 발생으로 인하여 history 가 쌓이지 않았음을 검증
     }
 }
