@@ -1,8 +1,8 @@
 package io.hhplus.tdd.point;
 
-import io.hhplus.tdd.api.common.ErrorEnum;
+import io.hhplus.tdd.common.enums.ResponseCodeEnum;
 import io.hhplus.tdd.database.UserPointTable;
-import io.hhplus.tdd.point.exception.BusinessException;
+import io.hhplus.tdd.common.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -153,7 +153,7 @@ class PointServiceUnitTest {
         given(userPointTable.selectById(userId)).willReturn(userPoint);
 
         // 포인트 부족 시 예외 던지기 모의
-        willThrow(new BusinessException(ErrorEnum.NOT_ENOUGH_POINT))
+        willThrow(new BusinessException(ResponseCodeEnum.NOT_ENOUGH_POINT))
                 .given(validator)
                 .validateUsePoint(userPoint, expendAmount);
 
@@ -182,7 +182,7 @@ class PointServiceUnitTest {
         given(userPointTable.selectById(userId)).willReturn(userPoint);
 
         // 포인트 부족 시 예외 던지기 모의
-        willThrow(new BusinessException(ErrorEnum.BALANCE_EXCEED_LIMIT))
+        willThrow(new BusinessException(ResponseCodeEnum.BALANCE_EXCEED_LIMIT))
                 .given(validator)
                 .validateChargePoint(userPoint, chargeAmount);
 

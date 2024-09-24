@@ -1,25 +1,32 @@
 package io.hhplus.tdd.point;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.hhplus.tdd.common.ApiResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/point")
+@RequiredArgsConstructor
+@Slf4j
 public class PointController {
 
-    private static final Logger log = LoggerFactory.getLogger(PointController.class);
+    private final PointService pointService;
+    private final PointHistoryService pointHistoryService;
 
     /**
-     * TODO - 특정 유저의 포인트를 조회하는 기능을 작성해주세요.
+     * 포인트 조회 API
+     * @param id
      */
     @GetMapping("{id}")
-    public UserPoint point(
+    public ResponseEntity<ApiResponse> point(
             @PathVariable long id
     ) {
-        return new UserPoint(0, 0, 0);
+        UserPoint userPoint = new UserPoint(0, 0, 0);
+        return ResponseEntity.ok(ApiResponse.success(userPoint));
     }
 
     /**
