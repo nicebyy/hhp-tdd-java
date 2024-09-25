@@ -1,6 +1,8 @@
 package io.hhplus.tdd.point;
 
 import io.hhplus.tdd.common.exception.BusinessException;
+import io.hhplus.tdd.point.entity.UserPoint;
+import io.hhplus.tdd.point.service.PointTransactionValidator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

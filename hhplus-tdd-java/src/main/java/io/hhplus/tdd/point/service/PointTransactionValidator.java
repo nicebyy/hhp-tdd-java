@@ -1,7 +1,8 @@
-package io.hhplus.tdd.point;
+package io.hhplus.tdd.point.service;
 
 import io.hhplus.tdd.common.enums.ResponseCodeEnum;
 import io.hhplus.tdd.common.exception.BusinessException;
+import io.hhplus.tdd.point.entity.UserPoint;
 import org.springframework.stereotype.Component;
 
 @Component
