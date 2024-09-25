@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class PointTransactionValidator {
 
-    static final Long MAX_BALANCE = 100000L;
+    public static final Long MAX_BALANCE = 100000L;
 
     public void validateUsePoint(UserPoint userPoint, long amount){
 

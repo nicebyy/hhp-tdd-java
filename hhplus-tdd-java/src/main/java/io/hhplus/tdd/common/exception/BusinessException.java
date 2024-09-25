@@ -2,14 +2,14 @@ package io.hhplus.tdd.common.exception;
 
 import io.hhplus.tdd.common.enums.ResponseCodeEnum;
 
-public class BusinessException extends RuntimeException {
+public class BusinessException extends CustomException {
 
     public BusinessException(String message) {
         super(message);
     }
 
     public BusinessException(ResponseCodeEnum code) {
-        super(code.getMessage());
+        super(code);
     }
 
     public BusinessException(ResponseCodeEnum code, String message) {

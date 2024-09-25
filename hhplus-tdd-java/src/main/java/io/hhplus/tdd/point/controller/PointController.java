@@ -1,6 +1,8 @@
 package io.hhplus.tdd.point.controller;
 
 import io.hhplus.tdd.common.ApiResponse;
+import io.hhplus.tdd.point.dto.ChargePointRequest;
+import io.hhplus.tdd.point.dto.UsePointRequest;
 import io.hhplus.tdd.point.entity.PointHistory;
 import io.hhplus.tdd.point.entity.UserPoint;
 import io.hhplus.tdd.point.service.PointHistoryService;
@@ -8,6 +10,7 @@ import io.hhplus.tdd.point.service.PointService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,46 +26,47 @@ public class PointController {
 
     /**
      * 포인트 조회 API
-     * @param id
      */
     @GetMapping("{id}")
     public ResponseEntity<ApiResponse> point(
             @PathVariable long id
     ) {
-        UserPoint userPoint = new UserPoint(0, 0, 0);
+        UserPoint userPoint = pointService.findUserPointById(id);
         return ResponseEntity.ok(ApiResponse.success(userPoint));
     }
 
     /**
-     * TODO - 특정 유저의 포인트 충전/이용 내역을 조회하는 기능을 작성해주세요.
+     * 포인트 히스토리 조회 API
      */
     @GetMapping("{id}/histories")
-    public List<PointHistory> history(
+    public ResponseEntity<ApiResponse> history(
             @PathVariable long id
     ) {
-        return List.of();
+        List<PointHistory> allHistories = pointHistoryService.findAllHistories(id);
+        return ResponseEntity.ok(ApiResponse.success(allHistories));
     }
 
     /**
-     * TODO - 특정 유저의 포인트를 충전하는 기능을 작성해주세요.
+     * 포인트 충전 API
      */
     @PatchMapping("{id}/charge")
-    public UserPoint charge(
+    public ResponseEntity<ApiResponse> charge(
             @PathVariable long id,
-            @RequestBody long amount
+            @RequestBody @Validated ChargePointRequest request
     ) {
-
-        return new UserPoint(0, 0, 0);
+        UserPoint userPoint = pointService.chargeUserPoint(id, request.getAmount());
+        return ResponseEntity.ok(ApiResponse.success(userPoint));
     }
 
     /**
-     * TODO - 특정 유저의 포인트를 사용하는 기능을 작성해주세요.
+     * 포인트 사용 API
      */
     @PatchMapping("{id}/use")
-    public UserPoint use(
+    public ResponseEntity<ApiResponse> use(
             @PathVariable long id,
-            @RequestBody long amount
+            @RequestBody @Validated UsePointRequest request
     ) {
-        return new UserPoint(0, 0, 0);
+        UserPoint userPoint = pointService.expendUserPoint(id, request.getAmount());
+        return ResponseEntity.ok(ApiResponse.success(userPoint));
     }
 }

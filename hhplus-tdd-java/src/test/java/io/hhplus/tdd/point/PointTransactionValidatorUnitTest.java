@@ -57,7 +57,7 @@ class PointTransactionValidatorUnitTest {
     }
 
     @Test
-    @DisplayName("충전 이후 포인트 합이 최대한도를 초과하면 예외를 발생시킨다.")
+    @DisplayName("충전할때 포인트 합이 최대한도를 초과하면 예외를 발생시킨다.")
     void checkUserPointWithExceedingMaxLimit() {
 
         //given
@@ -73,7 +73,7 @@ class PointTransactionValidatorUnitTest {
     }
 
     @Test
-    @DisplayName("충전 이후 포인트 합이 최대한도를 넘지 않는다.")
+    @DisplayName("충전할 때 포인트 합이 최대한도를 넘지 않는다.")
     void checkUserPointWithNotExceedingMaxLimit() {
 
         //given
